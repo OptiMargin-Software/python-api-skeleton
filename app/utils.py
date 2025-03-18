@@ -32,4 +32,4 @@ def validate_token(
         )
         return payload
     except JWTError as e:
-        raise HTTPException(status_code=401, detail="Invalid token: " + e.args[0])
+        raise HTTPException(status_code=401, detail="Invalid token: " + str(e.args[0]))
