@@ -1,12 +1,13 @@
 import time
 from datetime import date
 
-import prometheus_client
 from fastapi import Depends, FastAPI, Query, Request
 from fastapi.security import HTTPBearer
 from pydantic import BaseModel
+import prometheus_client
 from requests import get
 from starlette_exporter import PrometheusMiddleware, handle_metrics
+
 from app.utils import validate_token, JWKS_URL
 
 
