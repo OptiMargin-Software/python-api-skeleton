@@ -2,6 +2,6 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: 'hellow-world-api'
+  - job_name: 'hello-world-api'
     static_configs:
-      - targets: ['hellow-world-api:8001']
+      - targets: ['hello-world-api:8001']
