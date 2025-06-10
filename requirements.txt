@@ -3,7 +3,7 @@ numpy==1.26.4
 pandas==2.2.1
 pydantic==2.6.3
 python-jose==3.4.0
-requests==2.32.3
+requests==2.32.4
 scikit-learn==1.5.2
 starlette_exporter==0.23.0
 uvicorn==0.28.0
