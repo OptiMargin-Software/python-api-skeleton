@@ -1,7 +1,7 @@
 from requests import get
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import jwt, JWTError
+import jwt
 from typing import Annotated
 
 security = HTTPBearer()
@@ -16,20 +16,20 @@ def validate_token(
 ):
     try:
         unverified_header = jwt.get_unverified_header(credentials.credentials)
-        kid = unverified_header["kid"]
+        kid = unverified_header.get("kid")
         key = next((k for k in jwks["keys"] if k["kid"] == kid), None)
 
         if not key:
             raise HTTPException(status_code=401, detail="Invalid token")
 
         payload = jwt.decode(
-            token=credentials.credentials,
-            key=key,
+            credentials.credentials,
+            key=jwt.PyJWK(key, algorithm="RS256").key,
             algorithms=["RS256"],
             audience="OptiMargin.Index.Data.Api",
             issuer=ISSUER,
             options={"verify_nbf": False},
         )
         return payload
-    except JWTError as e:
+    except jwt.PyJWTError as e:
         raise HTTPException(status_code=401, detail="Invalid token: " + str(e.args[0]))
