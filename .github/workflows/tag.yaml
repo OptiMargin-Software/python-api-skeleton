@@ -1,4 +1,4 @@
-name: Deploy to Core-Prod ECR
+name: Deploy to Core-Prod Harbor
 
 on:
   push:
@@ -13,36 +13,29 @@ jobs:
 
     steps:
     - name: Checkout code and submodule
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
           submodules: 'true'
           token: ${{ secrets.TOKEN }}
         
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+    - name: Login to Harbor Container Registry
+      uses: docker/login-action@v4
       with:
-        aws-access-key-id: ${{ secrets.PROD_ECR_AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.PROD_ECR_AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-2
+        registry: ${{ vars.HARBOR_REGISTRY || secrets.HARBOR_REGISTRY }}
+        username: ${{ secrets.HARBOR_USERNAME }}
+        password: ${{ secrets.HARBOR_PASSWORD }}
 
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
-
-    - name: Build, tag, and push image to Amazon ECR
+    - name: Build, tag, and push image to Harbor Container Registry
       env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        REGISTRY: ${{ vars.HARBOR_REGISTRY || secrets.HARBOR_REGISTRY }}/${{ vars.HARBOR_PROJECT || secrets.HARBOR_PROJECT }}
         IMAGE_TAG: ${{ github.ref_name }}
-        APP_REPO: ${{ github.repository }}
-        APP_REPO_OWNER: ${{ github.repository_owner }}
+        REPOSITORY: python-api-skeleton
       run: |
-        APP_NAME="${APP_REPO#$APP_REPO_OWNER/}"
-        APP_NAME="${APP_NAME,,}"
-        export ECR_REPOSITORY="${APP_NAME}"
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
-        docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        docker build -t "$REGISTRY/$REPOSITORY:$IMAGE_TAG" .
+        docker build -t "$REGISTRY/$REPOSITORY:latest" .
+        docker push "$REGISTRY/$REPOSITORY:$IMAGE_TAG"
+        docker push "$REGISTRY/$REPOSITORY:latest"
+        echo "image=$REGISTRY/$REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
 
   deploy:
     needs: build
